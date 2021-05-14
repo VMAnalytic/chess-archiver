@@ -1,0 +1,45 @@
+linters:
+    disable-all: true
+    enable:
+        - deadcode
+        - errcheck
+        - goimports
+        - golint
+        - govet
+        - ineffassign
+        - lll
+        - misspell
+        - staticcheck
+        - structcheck
+        - typecheck
+        - unconvert
+        - unparam
+        - unused
+        - varcheck
+        - whitespace
+        - wsl
+
+        # don't enable:
+        # - gochecknoglobals
+        # - gocognit
+        # - godox
+        # - maligned
+        # - prealloc
+
+issues:
+    # Excluding configuration per-path, per-linter, per-text and per-sources
+    exclude-rules:
+        # Exclude some linters from running on tests files.
+        - path: features
+          linters:
+              - lll
+
+# output configuration options
+output:
+    print-issued-lines: true
+    print-linter-name: true
+
+# golangci.com configuration
+# https://github.com/golangci/golangci/wiki/Configuration
+service:
+    golangci-lint-version: 1.37.1 # use the fixed version to not introduce new linters unexpectedly

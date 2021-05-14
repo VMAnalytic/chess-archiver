@@ -1,0 +1,9 @@
+.idea
+.env
+*.zip
+secret.json
+/bin/
+.DS_Store
+
+# code coverage report
+cover.out
