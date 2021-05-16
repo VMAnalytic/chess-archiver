@@ -3,17 +3,17 @@ package chessarchive
 import (
 	"fmt"
 	"io"
-	"time"
 )
 
 type Game struct {
-	ID       string
-	Source   string
-	Speed    string
-	PlayedAt time.Time
-	Winner   string
-	Duration int
+	ID     string `firestore:"id"`
+	Source string `firestore:"id"`
+	Speed  string `firestore:"id"`
+	//PlayedAt time.Time
+	Winner   string `firestore:"id"`
+	Duration int    `firestore:"id"`
 	PGN      io.Reader
+	Opening  Opening
 	Players  struct {
 		White Player
 		Black Player
@@ -21,8 +21,16 @@ type Game struct {
 }
 
 type Player struct {
-	Name   string
-	Rating uint16
+	Name     string
+	Rating   uint16
+	Analysis Analysis
+}
+
+type Analysis struct {
+	inaccuracy string
+	mistake    uint16
+	blunder    uint16
+	acpl       uint16
 }
 
 type Opening struct {
@@ -31,5 +39,9 @@ type Opening struct {
 }
 
 func (g Game) Name() string {
+	return fmt.Sprintf("%s - %s.pgn", g.Players.White.Name, g.Players.Black.Name)
+}
+
+func (g Game) WinnerName() string {
 	return fmt.Sprintf("%s - %s.pgn", g.Players.White.Name, g.Players.Black.Name)
 }

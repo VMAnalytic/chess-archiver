@@ -7,6 +7,7 @@ import (
 	"chess-archive/pkg/google/logging"
 	"context"
 
+	"cloud.google.com/go/firestore"
 	_ "github.com/joho/godotenv/autoload"
 )
 
@@ -24,7 +25,15 @@ func main() {
 	gdClient, _ := drive.NewHTTPtClient(ctx)
 	gcloudProcessor := chessArchive.NewDriveStoreProcessor(cfg.Google.ArchiveFolderID, gdClient, transformer, logger)
 
-	arch := chessArchive.NewArchiver(logger, cfg, transformer, []chessArchive.Processor{gcloudProcessor})
+	dataStoreClient, err := firestore.NewClient(ctx, cfg.Google.ProjectID)
+
+	if err != nil {
+		logger.Fatalln(err)
+	}
+
+	dataProcessor := chessArchive.NewDataStoreProcessor(logger, transformer, dataStoreClient)
+
+	arch := chessArchive.NewArchiver(logger, cfg, transformer, []chessArchive.Processor{gcloudProcessor, dataProcessor})
 
 	err = arch.Run(ctx)
 

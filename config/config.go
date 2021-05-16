@@ -17,6 +17,7 @@ type Config struct {
 	Timeout int    `env:"TIMEOUT,default=60"` //in seconds
 
 	Google struct {
+		ProjectID       string `env:"GOOGLE_PROJECT_ID"`
 		Secret          string `env:"GOOGLE_APPLICATION_CREDENTIALS"`
 		ArchiveFolderID string `env:"ARCHIVE_FOLDER_ID"`
 	}
@@ -56,7 +57,7 @@ func (c *Config) validateEnvironment() error {
 	return nil
 }
 
-func (c *Config) validateGoogleCredentials() error {
+func (c *Config) validateLichessCredentials() error {
 	if c.Lichess.APIKey == "" {
 		return errors.New("LICHESS_API_KEY ENV: required")
 	}
@@ -68,9 +69,13 @@ func (c *Config) validateGoogleCredentials() error {
 	return nil
 }
 
-func (c *Config) validateLichessCredentials() error {
-	if c.Env == string(gCloud) {
+func (c *Config) validateGoogleCredentials() error {
+	if c.Env != string(gCloud) {
 		return nil
+	}
+
+	if len(c.Google.ProjectID) == 0 {
+		return errors.New("project id is required")
 	}
 
 	if len(c.Google.Secret) == 0 {

@@ -3,9 +3,9 @@ package chessarchive
 import (
 	"chess-archive/pkg/google/drive"
 	"strings"
-	"time"
 
 	"github.com/VMAnalytic/lichess-api-client/lichess"
+	"github.com/fatih/structs"
 	"github.com/pkg/errors"
 )
 
@@ -35,12 +35,31 @@ func (t LichessTransformer) transformLichess(lg *lichess.Game) (*Game, error) {
 
 	g.ID = lg.ID
 	g.Speed = lg.Speed
-	g.PlayedAt = time.Unix(lg.CreatedAt, 0)
+	//g.PlayedAt = time.Unix(lg.CreatedAt, 0)
+	g.Winner = lg.Winner
 	g.PGN = strings.NewReader(lg.Pgn)
+
 	g.Players.White.Name = lg.Players.White.User.Name
 	g.Players.White.Rating = uint16(lg.Players.White.Rating)
+	g.Players.White.Analysis = Analysis{
+		inaccuracy: "",
+		mistake:    0,
+		blunder:    0,
+		acpl:       0,
+	}
 	g.Players.Black.Name = lg.Players.Black.User.Name
 	g.Players.Black.Rating = uint16(lg.Players.Black.Rating)
+	g.Players.Black.Analysis = Analysis{
+		inaccuracy: "",
+		mistake:    0,
+		blunder:    0,
+		acpl:       0,
+	}
+
+	g.Opening = Opening{
+		Name:    lg.Opening.Name,
+		ECOCode: lg.Opening.Eco,
+	}
 
 	return &g, nil
 }
@@ -53,4 +72,10 @@ func (t LichessTransformer) TransformToFile(game *Game) (*drive.File, error) {
 	f.Description = "Test"
 
 	return &f, nil
+}
+
+func (t LichessTransformer) TransformToMap(game *Game) map[string]interface{} {
+	data := structs.Map(game)
+
+	return data
 }
