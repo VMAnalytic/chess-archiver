@@ -37,6 +37,7 @@ func NewDriveStoreProcessor(
 
 func (d *GDriveStoreProcessor) Process(ctx context.Context, g *Game) error {
 	d.logger.Debugf("GDriveStoreProcessor process game ID: %s", g.ID)
+
 	file, err := d.transformer.TransformToFile(g)
 
 	if err != nil {
@@ -73,9 +74,7 @@ func NewDataStoreProcessor(
 func (d *DataStoreProcessor) Process(ctx context.Context, g *Game) error {
 	d.logger.Debugf("DataStoreProcessor process game ID: %s", g.ID)
 
-	data := d.transformer.TransformToMap(g)
-
-	_, _, err := d.datastoreClient.Collection("games").Add(ctx, data)
+	_, err := d.datastoreClient.Collection("games").Doc(g.ID).Set(ctx, g)
 	if err != nil {
 		return errors.WithStack(err)
 	}

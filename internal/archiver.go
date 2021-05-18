@@ -2,9 +2,7 @@ package chessarchive
 
 import (
 	"chess-archive/config"
-	"chess-archive/pkg/google/drive"
 	"context"
-	"time"
 
 	"github.com/VMAnalytic/lichess-api-client/lichess"
 	"github.com/pkg/errors"
@@ -13,66 +11,68 @@ import (
 )
 
 type Archiver struct {
-	logger      logrus.FieldLogger
-	cfg         *config.Config
-	Transformer *LichessTransformer
-	processors  []Processor
+	logger        logrus.FieldLogger
+	cfg           *config.Config
+	transformer   *LichessTransformer
+	chessProvider *lichess.Client
+	gameStorage   GameStorage
+	processors    []Processor
 }
 
 func NewArchiver(
 	logger logrus.FieldLogger,
 	cfg *config.Config,
 	transformer *LichessTransformer,
+	chessProvider *lichess.Client,
+	gameStorage GameStorage,
 	processors []Processor,
 ) *Archiver {
 	return &Archiver{
-		logger:      logger,
-		cfg:         cfg,
-		Transformer: transformer,
-		processors:  processors,
+		logger:        logger,
+		cfg:           cfg,
+		transformer:   transformer,
+		chessProvider: chessProvider,
+		gameStorage:   gameStorage,
+		processors:    processors,
 	}
 }
 
 func (a Archiver) Run(ctx context.Context) error {
-	lichessClient := lichess.NewClient(a.cfg.Lichess.APIKey, nil)
-	err := lichessClient.SetLimits(1*time.Second, 20)
-
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	gdClient, err := drive.NewHTTPtClient(ctx)
-	if err != nil {
-		return errors.WithStack(err)
-	}
+	a.logger.Infoln("process started...")
 
 	since := int64(0)
-	latest, err := gdClient.Latest(ctx, a.cfg.Google.ArchiveFolderID)
+	latest, err := a.gameStorage.Last(ctx)
 
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	if latest != nil && latest.CreatedAt() != nil {
-		since = latest.CreatedAt().Unix()
+	if latest != nil {
+		since = latest.PlayedAt
 	}
 
-	games, _, err := lichessClient.Games.List(ctx, a.cfg.Lichess.Username, lichess.ListOptions{Since: since})
+	games, _, err := a.chessProvider.Games.List(ctx, a.cfg.Lichess.Username, lichess.ListOptions{Since: since})
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
 	group, gctx := errgroup.WithContext(ctx)
 
-	for _, g := range games {
+	for i, g := range games {
+		if i == 10 {
+			break
+		}
+
+		game, err := a.transformer.Transform(g)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+
 		for _, p := range a.processors {
-			game, err := a.Transformer.Transform(g)
-			if err != nil {
-				return errors.WithStack(err)
-			}
+			proc := p
 
 			group.Go(func() error {
-				err = p.Process(gctx, game)
+				err = proc.Process(gctx, game)
 				if err != nil {
 					return errors.WithStack(err)
 				}
@@ -85,6 +85,8 @@ func (a Archiver) Run(ctx context.Context) error {
 	if err = group.Wait(); err != nil {
 		return errors.WithStack(err)
 	}
+
+	a.logger.Infoln("process finished...")
 
 	return nil
 }

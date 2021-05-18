@@ -61,17 +61,7 @@ func newFileFromOrigin(file *drive.File) (*File, error) {
 }
 
 func (f File) CreatedAt() *time.Time {
-	strTime := f.Tags["game_at"]
-	if strTime == "" {
-		return nil
-	}
-
-	t, err := time.Parse(time.RFC3339, strTime)
-	if err != nil {
-		return nil
-	}
-
-	return &t
+	return f.UploadedAt
 }
 
 func (f *File) AddTag(key, value string) {

@@ -23,8 +23,9 @@ type Config struct {
 	}
 
 	Lichess struct {
-		APIKey   string `env:"LICHESS_API_KEY"`
-		Username string `env:"LICHESS_USERNAME"`
+		APIKey      string `env:"LICHESS_API_KEY"`
+		Username    string `env:"LICHESS_USERNAME"`
+		LimitPerSec int    `env:"LICHESS_API_LIMIT,default=20"`
 	}
 }
 

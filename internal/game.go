@@ -2,40 +2,47 @@ package chessarchive
 
 import (
 	"fmt"
-	"io"
+)
+
+type Source int
+
+const (
+	_ = iota
+	lichessorg
 )
 
 type Game struct {
-	ID     string `firestore:"id"`
-	Source string `firestore:"id"`
-	Speed  string `firestore:"id"`
-	//PlayedAt time.Time
-	Winner   string `firestore:"id"`
-	Duration int    `firestore:"id"`
-	PGN      io.Reader
-	Opening  Opening
+	ID       string  `firestore:"id"`
+	Source   Source  `firestore:"source"`
+	Speed    string  `firestore:"speed"`
+	Duration int16   `firestore:"duration"`
+	Status   string  `firestore:"status"`
+	PlayedAt int64   `firestore:"played_at"`
+	Winner   string  `firestore:"winner"`
+	PGN      string  `firestore:"pgn"`
+	Opening  Opening `firestore:"opening"`
 	Players  struct {
-		White Player
-		Black Player
-	}
+		White Player `firestore:"white"`
+		Black Player `firestore:"black"`
+	} `firestore:"players"`
 }
 
 type Player struct {
-	Name     string
-	Rating   uint16
-	Analysis Analysis
+	Name     string   `firestore:"name"`
+	Rating   uint16   `firestore:"rating"`
+	Analysis Analysis `firestore:"analysis"`
 }
 
 type Analysis struct {
-	inaccuracy string
-	mistake    uint16
-	blunder    uint16
-	acpl       uint16
+	Inaccuracy uint16 `firestore:"inaccuracy"`
+	Mistake    uint16 `firestore:"mistake"`
+	Blunder    uint16 `firestore:"blunder"`
+	ACPL       uint16 `firestore:"acpl"`
 }
 
 type Opening struct {
-	Name    string
-	ECOCode string
+	Name    string `firestore:"name"`
+	ECOCode string `firestore:"eco_code"`
 }
 
 func (g Game) Name() string {
@@ -43,5 +50,9 @@ func (g Game) Name() string {
 }
 
 func (g Game) WinnerName() string {
+	return fmt.Sprintf("%s - %s.pgn", g.Players.White.Name, g.Players.Black.Name)
+}
+
+func (g Game) Moves() string {
 	return fmt.Sprintf("%s - %s.pgn", g.Players.White.Name, g.Players.Black.Name)
 }
