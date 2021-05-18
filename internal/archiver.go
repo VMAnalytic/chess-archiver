@@ -51,18 +51,14 @@ func (a Archiver) Run(ctx context.Context) error {
 		since = latest.PlayedAt
 	}
 
-	games, _, err := a.chessProvider.Games.List(ctx, a.cfg.Lichess.Username, lichess.ListOptions{Since: since})
+	games, _, err := a.chessProvider.Games.List(ctx, a.cfg.Lichess.UserID, lichess.ListOptions{Since: since})
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
 	group, gctx := errgroup.WithContext(ctx)
 
-	for i, g := range games {
-		if i == 10 {
-			break
-		}
-
+	for _, g := range games {
 		game, err := a.transformer.Transform(g)
 		if err != nil {
 			return errors.WithStack(err)

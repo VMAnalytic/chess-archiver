@@ -22,6 +22,8 @@ func main() {
 		logger.Fatalln(err)
 	}
 
+	config.TimeZone = cfg.TimeZone
+
 	ctx := context.Background()
 
 	dataStoreClient, err := firestore.NewClient(ctx, cfg.Google.ProjectID)
@@ -39,8 +41,13 @@ func main() {
 
 	gameStorage := chessArchive.NewDataStoreGameStorage(logger, dataStoreClient)
 
-	transformer := chessArchive.NewGameTransformer()
-	gdClient, _ := drive.NewHTTPtClient(ctx)
+	transformer := chessArchive.NewGameTransformer(cfg.Lichess.UserID)
+	gdClient, err := drive.NewHTTPtClient(ctx)
+
+	if err != nil {
+		logger.Fatalln(err)
+	}
+
 	gcloudProcessor := chessArchive.NewDriveStoreProcessor(cfg.Google.ArchiveFolderID, gdClient, transformer, logger)
 
 	dataProcessor := chessArchive.NewDataStoreProcessor(logger, transformer, dataStoreClient)

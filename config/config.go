@@ -12,9 +12,12 @@ type ENV string
 
 const gCloud ENV = "gcloud"
 
+var TimeZone = "UTC"
+
 type Config struct {
-	Env     string `env:"ENVIRONMENT"`
-	Timeout int    `env:"TIMEOUT,default=60"` //in seconds
+	Env      string `env:"ENVIRONMENT"`
+	Timeout  int    `env:"TIMEOUT,default=60"` //in seconds
+	TimeZone string `env:"TIMEZONE,default=UTC"`
 
 	Google struct {
 		ProjectID       string `env:"GOOGLE_PROJECT_ID"`
@@ -24,7 +27,7 @@ type Config struct {
 
 	Lichess struct {
 		APIKey      string `env:"LICHESS_API_KEY"`
-		Username    string `env:"LICHESS_USERNAME"`
+		UserID      string `env:"LICHESS_USER_ID"`
 		LimitPerSec int    `env:"LICHESS_API_LIMIT,default=20"`
 	}
 }
@@ -63,7 +66,7 @@ func (c *Config) validateLichessCredentials() error {
 		return errors.New("LICHESS_API_KEY ENV: required")
 	}
 
-	if c.Lichess.Username == "" {
+	if c.Lichess.UserID == "" {
 		return errors.New("LICHESS_USERNAME ENV: required")
 	}
 
